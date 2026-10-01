@@ -9,6 +9,7 @@ const PUBLIC_PREFIXES = [
   "/privacidade",
   "/termos",
   "/exclusao-de-dados",
+  "/remover-dados",
   "/invite",
 ];
 
