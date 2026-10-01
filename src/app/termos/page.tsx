@@ -6,11 +6,11 @@ export const metadata: Metadata = { title: "Termos de Serviço" };
 export default function TermsPage() {
   return (
     <LegalPage title="Termos de Serviço" updatedAt="29/09/2026">
-      <p>Ao usar o InstaFlow você concorda com estes termos.</p>
+      <p>Ao usar o ChatFlow você concorda com estes termos.</p>
 
       <h2>1. O serviço</h2>
       <p>
-        O InstaFlow é uma ferramenta de automação de mensagens para contas profissionais do Instagram que funciona exclusivamente por meio das
+        O ChatFlow é uma ferramenta de automação de mensagens para contas profissionais do Instagram que funciona exclusivamente por meio das
         APIs oficiais da Meta. A disponibilidade de recursos depende das políticas e da disponibilidade da própria Meta.
       </p>
 

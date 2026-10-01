@@ -8,7 +8,7 @@ export default function PrivacyPage() {
   return (
     <LegalPage title="Política de Privacidade" updatedAt="29/09/2026">
       <p>
-        Esta política explica como o InstaFlow coleta, usa e protege dados ao oferecer automação de mensagens para contas profissionais do
+        Esta política explica como o ChatFlow coleta, usa e protege dados ao oferecer automação de mensagens para contas profissionais do
         Instagram por meio da API oficial da Meta. Ela segue a Lei Geral de Proteção de Dados (LGPD — Lei 13.709/2018).
       </p>
 

@@ -20,7 +20,7 @@ Substitua `seuprojeto.vercel.app` pela URL real que a Vercel gerar.
 ```bash
 git init
 git add .
-git commit -m "InstaFlow: versão inicial"
+git commit -m "ChatFlow: versão inicial"
 git branch -M main
 git remote add origin https://github.com/SEU_USUARIO/instaflow.git
 git push -u origin main

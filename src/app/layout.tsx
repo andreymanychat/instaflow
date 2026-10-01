@@ -8,9 +8,9 @@ const geistSans = Geist({ variable: "--font-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: { default: "InstaFlow — Automação para Instagram", template: "%s · InstaFlow" },
+  title: { default: "ChatFlow — Automação para Instagram", template: "%s · ChatFlow" },
   description: "Automatize comentários e mensagens do Instagram com fluxos visuais e IA, usando a API oficial da Meta.",
-  applicationName: "InstaFlow",
+  applicationName: "ChatFlow",
 };
 
 export const viewport: Viewport = { themeColor: "#7c3aed" };

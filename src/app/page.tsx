@@ -71,7 +71,7 @@ export default async function LandingPage() {
 
       <footer className="border-t">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-6 text-sm text-muted-foreground md:px-6">
-          <span>© {new Date().getFullYear()} InstaFlow</span>
+          <span>© {new Date().getFullYear()} ChatFlow</span>
           <nav className="flex gap-4">
             <Link href="/privacidade" className="hover:text-foreground">Privacidade</Link>
             <Link href="/termos" className="hover:text-foreground">Termos</Link>

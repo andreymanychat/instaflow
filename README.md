@@ -1,4 +1,4 @@
-# InstaFlow
+# ChatFlow
 
 Plataforma SaaS de automação para Instagram (alternativa ao ManyChat) construída **apenas com APIs oficiais da Meta**.
 Multi-tenant, multiusuário, com construtor visual de fluxos, caixa de entrada em tempo real e IA (OpenAI).
