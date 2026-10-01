@@ -12,8 +12,10 @@ const serverSchema = z.object({
   NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(20),
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(20),
 
-  INSTAGRAM_APP_ID: z.string().min(5),
-  INSTAGRAM_APP_SECRET: z.string().min(10),
+  // Opcionais na validação global: o app (webhook, cron, painel) precisa subir antes de o app da Meta existir.
+  // Quem usa de fato chama instagramCredentials(), que falha com mensagem clara.
+  INSTAGRAM_APP_ID: z.string().optional(),
+  INSTAGRAM_APP_SECRET: z.string().optional(),
   /** Opcional: chave secreta do app Meta (Configurações → Básico), aceita como alternativa na validação de assinaturas. */
   META_APP_SECRET: z.string().optional(),
   META_WEBHOOK_VERIFY_TOKEN: z.string().min(16),
@@ -44,6 +46,14 @@ export function env(): ServerEnv {
   }
   cached = parsed.data;
   return cached;
+}
+
+export function instagramCredentials() {
+  const { INSTAGRAM_APP_ID: appId, INSTAGRAM_APP_SECRET: appSecret } = env();
+  if (!appId || !appSecret) {
+    throw new Error("INSTAGRAM_APP_ID e INSTAGRAM_APP_SECRET não configurados (Meta Developer → caso de uso do Instagram).");
+  }
+  return { appId, appSecret };
 }
 
 export const isOpenAIConfigured = () => Boolean(process.env.OPENAI_API_KEY);

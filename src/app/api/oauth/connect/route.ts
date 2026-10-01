@@ -25,6 +25,11 @@ export async function GET() {
     return NextResponse.redirect(settingsUrl);
   }
 
+  if (!process.env.INSTAGRAM_APP_ID || !process.env.INSTAGRAM_APP_SECRET) {
+    settingsUrl.searchParams.set("error", "Integração com a Meta ainda não configurada (INSTAGRAM_APP_ID/INSTAGRAM_APP_SECRET).");
+    return NextResponse.redirect(settingsUrl);
+  }
+
   // state = nonce + org + user, assinado com HMAC e guardado em cookie httpOnly (proteção CSRF)
   const state = signValue(`${randomToken(16)}~${organization.id}~${user.id}`);
   const cookieStore = await cookies();

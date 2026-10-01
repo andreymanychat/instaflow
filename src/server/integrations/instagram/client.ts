@@ -1,5 +1,5 @@
 import "server-only";
-import { env } from "@/lib/env";
+import { env, instagramCredentials } from "@/lib/env";
 import { parseJsonSafe } from "@/lib/safe-json";
 import type {
   IgLongLivedTokenResponse,
@@ -87,7 +87,7 @@ export function redirectUri() {
 
 export function buildAuthorizeUrl(state: string) {
   const params = new URLSearchParams({
-    client_id: env().INSTAGRAM_APP_ID,
+    client_id: instagramCredentials().appId,
     redirect_uri: redirectUri(),
     response_type: "code",
     scope: INSTAGRAM_SCOPES.join(","),
@@ -100,8 +100,8 @@ export function buildAuthorizeUrl(state: string) {
 
 export async function exchangeCodeForToken(code: string): Promise<IgTokenResponse> {
   const form = new URLSearchParams({
-    client_id: env().INSTAGRAM_APP_ID,
-    client_secret: env().INSTAGRAM_APP_SECRET,
+    client_id: instagramCredentials().appId,
+    client_secret: instagramCredentials().appSecret,
     grant_type: "authorization_code",
     redirect_uri: redirectUri(),
     code,
@@ -117,7 +117,7 @@ export async function exchangeCodeForToken(code: string): Promise<IgTokenRespons
 export function exchangeForLongLivedToken(shortLivedToken: string) {
   const params = new URLSearchParams({
     grant_type: "ig_exchange_token",
-    client_secret: env().INSTAGRAM_APP_SECRET,
+    client_secret: instagramCredentials().appSecret,
     access_token: shortLivedToken,
   });
   return request<IgLongLivedTokenResponse>(`https://graph.instagram.com/access_token?${params}`);
