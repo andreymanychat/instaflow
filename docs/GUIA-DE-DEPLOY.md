@@ -1,6 +1,7 @@
 # Guia de deploy — do zero ao ar
 
 Tudo nos planos gratuitos, sem cartão de crédito. Siga na ordem.
+Pagamentos (Asaas: cartão e Pix), planos, carteira e indicações: veja [PAGAMENTOS.md](PAGAMENTOS.md).
 Substitua `seuprojeto.vercel.app` pela URL real que a Vercel gerar.
 
 ---
@@ -37,7 +38,7 @@ git push -u origin main
 
 ### 3.2 Criar as tabelas
 1. Menu **SQL Editor** → **New query**.
-2. Cole todo o conteúdo de `supabase/migrations/20260929000000_initial_schema.sql` → **Run**.
+2. Cole o conteúdo de **cada arquivo** de `supabase/migrations/`, em ordem de nome (data), → **Run** em cada um.
 3. Confira em **Table Editor**: devem aparecer `organizations`, `automations`, `contacts`, `plans` etc.
 
 > Alternativa via CLI: `npx supabase login`, `npx supabase init`, `npx supabase link --project-ref <ref>` e `npx supabase db push`.
@@ -98,6 +99,9 @@ TOKEN_ENCRYPTION_KEY=...
 CRON_SECRET=...
 OPENAI_API_KEY=...            (opcional)
 OPENAI_DEFAULT_MODEL=gpt-5-mini
+ASAAS_API_KEY=...             (opcional — sem ela todos ficam no Free)
+ASAAS_ENVIRONMENT=sandbox
+ASAAS_WEBHOOK_TOKEN=...
 ```
 
 5. **Deploy**. Anote a URL gerada (ex.: `seuprojeto.vercel.app`). Se ela for diferente do que você colocou em
@@ -195,4 +199,6 @@ Depois atualize `NEXT_PUBLIC_APP_URL`, as URLs no Supabase (3.4), no app da Meta
 | Nada chega                                | Conta não é testadora, não aceitou convite, ou "Sincronizar" em Config → Instagram |
 | "Fora da janela de 24h"                   | Regra da Meta: o contato precisa ter enviado mensagem nas últimas 24h             |
 | Delays longos não continuam               | `cron.sql` não executado ou `CRON_SECRET` diferente                               |
+| Botão "Assinar" mostra "Em breve"          | `ASAAS_API_KEY` ausente na Vercel ou sem redeploy                                 |
+| Pix pago mas plano não ativa              | Webhook do Asaas não cadastrado/token diferente; a tela também consulta a cada 5s |
 | Erro de redirect no login por email        | Redirect URLs do Supabase (passo 3.4)                                             |

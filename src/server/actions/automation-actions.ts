@@ -109,7 +109,7 @@ export async function setAutomationStatus(automationId: string, status: "active"
 
     if (status === "active") {
       const quota = await checkLimit(organization.id, "active_automations");
-      if (!quota.allowed) return fail(`Seu plano permite ${quota.limit} automações ativas.`);
+      if (!quota.allowed) return fail(`Seu plano permite ${quota.limit} automação(ões) ativa(s). Pause outra ou faça upgrade em Assinatura.`);
 
       const { data: automation } = await supabase
         .from("automations")

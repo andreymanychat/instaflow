@@ -2,7 +2,10 @@
 
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { REFERRAL_COOKIE } from "@/server/billing/referral-cookie";
 import { fail, ok, zodError, type ActionResult } from "@/lib/action-result";
 
 const appUrl = () => process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
@@ -48,9 +51,25 @@ export async function signUp(
   });
   if (error) return fail(error.message);
 
+  // identities vazio = email já cadastrado (o Supabase devolve um usuário fictício para não revelar isso)
+  if (data.user && data.user.identities?.length) await recordReferral(data.user.id);
+
   // Com confirmação de email desativada o Supabase já devolve a sessão.
   if (data.session) redirect(next);
   return ok({ needsConfirmation: true });
+}
+
+/** Vincula o novo usuário a quem o indicou (cookie do link /r/<código>, válido por 3 dias). */
+async function recordReferral(newUserId: string) {
+  const cookieStore = await cookies();
+  const code = cookieStore.get(REFERRAL_COOKIE)?.value;
+  if (!code) return;
+  cookieStore.delete(REFERRAL_COOKIE);
+
+  const db = createAdminClient();
+  const { data: link } = await db.from("referral_links").select("id, user_id, expires_at").eq("code", code).maybeSingle();
+  if (!link || new Date(link.expires_at) <= new Date() || link.user_id === newUserId) return;
+  await db.from("referrals").insert({ referrer_id: link.user_id, referred_id: newUserId, link_id: link.id });
 }
 
 export async function requestPasswordReset(_: ActionResult | null, formData: FormData): Promise<ActionResult> {

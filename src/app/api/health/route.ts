@@ -16,6 +16,8 @@ export async function GET() {
     "TOKEN_ENCRYPTION_KEY",
     "CRON_SECRET",
     "OPENAI_API_KEY",
+    "ASAAS_API_KEY",
+    "ASAAS_WEBHOOK_TOKEN",
   ];
   const configured = Object.fromEntries(envs.map((key) => [key, Boolean(process.env[key])]));
 
@@ -27,5 +29,10 @@ export async function GET() {
     database = false;
   }
 
-  return NextResponse.json({ ok: database, database, env: configured });
+  return NextResponse.json({
+    ok: database,
+    database,
+    env: configured,
+    billingEnvironment: process.env.ASAAS_ENVIRONMENT ?? "sandbox",
+  });
 }

@@ -29,7 +29,7 @@ end $$;
 
 -- Remove agendamentos anteriores (permite rodar o script de novo)
 select cron.unschedule(jobname) from cron.job
-where jobname in ('instaflow-process-jobs', 'instaflow-refresh-tokens', 'instaflow-cleanup');
+where jobname in ('instaflow-process-jobs', 'instaflow-refresh-tokens', 'instaflow-billing', 'instaflow-cleanup');
 
 -- Processa a fila a cada minuto
 select cron.schedule('instaflow-process-jobs', '* * * * *', $job$
@@ -49,10 +49,20 @@ select cron.schedule('instaflow-refresh-tokens', '0 3 * * *', $job$
     body := '{}'::jsonb, timeout_milliseconds := 55000);
 $job$);
 
+-- Renovações de assinatura (Pix 3 dias antes, cobrança no vencimento, volta ao Free) de hora em hora
+select cron.schedule('instaflow-billing', '15 * * * *', $job$
+  select net.http_post(
+    url := 'https://SEU-PROJETO.vercel.app/api/cron/billing',
+    headers := jsonb_build_object('Content-Type', 'application/json', 'Authorization',
+      'Bearer ' || (select decrypted_secret from vault.decrypted_secrets where name = 'instaflow_cron_secret')),
+    body := '{}'::jsonb, timeout_milliseconds := 55000);
+$job$);
+
 -- Limpeza de dados operacionais antigos (mantém o banco dentro dos 500MB do plano grátis)
 select cron.schedule('instaflow-cleanup', '30 4 * * *', $job$
   delete from public.webhook_events where created_at < now() - interval '14 days';
   delete from public.logs where created_at < now() - interval '30 days';
+  delete from public.billing_events where processed_at is not null and created_at < now() - interval '90 days';
   delete from public.scheduled_jobs where status in ('done', 'failed') and updated_at < now() - interval '7 days';
   delete from cron.job_run_details where end_time < now() - interval '3 days';
 $job$);

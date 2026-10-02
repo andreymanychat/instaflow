@@ -86,13 +86,15 @@ compartilhados por cliente e servidor. No servidor:
 
 ### 9. Server Actions para a UI, Route Handlers para o mundo externo
 Mutações do painel usam Server Actions (tipadas ponta a ponta, sem boilerplate de fetch). Tudo que é
-chamado por terceiros (Meta, pg_cron, Stripe) é Route Handler em `/api`, com autenticação própria.
+chamado por terceiros (Meta, pg_cron, Asaas) é Route Handler em `/api`, com autenticação própria.
 
-### 10. Planos e Stripe
+### 10. Planos e pagamentos (Asaas)
 Limites ficam em `plans.limits` (JSON) e são verificados no backend (`plan-service.ts`) ao conectar contas,
-ativar automações, convidar membros e gerar respostas de IA. A cobrança passa pela interface
-`BillingProvider`; para ativar o Stripe basta implementá-la e tratar os eventos em `/api/billing/webhook`
-(passo a passo no comentário de `src/server/billing/billing-provider.ts`).
+ativar automações, criar contatos, convidar membros, usar segmentação e gerar respostas de IA.
+A cobrança usa o **Asaas** (cartão tokenizado e Pix numa única API brasileira) em `src/server/billing/`:
+regras puras e testadas em `pricing.ts`, orquestração em `billing-service.ts`, webhook idempotente em
+`/api/billing/webhook` e renovação de hora em hora em `/api/cron/billing`. A carteira de créditos é por usuário
+e só muda pela função `wallet_apply` (atômica e idempotente). Detalhes em [PAGAMENTOS.md](PAGAMENTOS.md).
 
 ## Modelo de dados (principais tabelas)
 
@@ -112,4 +114,7 @@ ativar automações, convidar membros e gerar respostas de IA. A cobrança passa
 | `scheduled_jobs`          | Fila persistente                                                    |
 | `ai_prompts`              | Prompts configuráveis                                               |
 | `logs`, `webhook_events`  | Observabilidade                                                     |
-| `plans`                   | Planos e limites (Stripe-ready)                                     |
+| `plans`                   | Planos, preços e limites                                           |
+| `user_wallets` / `wallet_transactions` | Saldo de créditos e extrato por usuário               |
+| `payments` / `payment_methods` | Cobranças (assinatura/recarga) e cartões tokenizados         |
+| `referral_links` / `referrals` | Indique e ganhe (links de 3 dias e recompensas)              |

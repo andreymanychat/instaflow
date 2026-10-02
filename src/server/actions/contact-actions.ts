@@ -4,6 +4,9 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { fail, ok, safeAction, zodError } from "@/lib/action-result";
 import { getOrgContext } from "@/server/auth/session";
+import { getPlanLimits } from "@/server/services/plan-service";
+
+const SEGMENTATION_LOCKED = "Segmentação avançada está disponível nos planos Pro e Business.";
 import type { Json } from "@/types/database";
 
 const tagSchema = z.object({
@@ -101,6 +104,7 @@ function validateRuleValues(filters: z.infer<typeof segmentSchema>["filters"]) {
 export async function saveSegment(segmentId: string | null, input: SegmentInput) {
   return safeAction(async () => {
     const { supabase, organization } = await getOrgContext();
+    if (!(await getPlanLimits(organization.id)).advanced_segmentation) return fail(SEGMENTATION_LOCKED);
     const parsed = segmentSchema.safeParse(input);
     if (!parsed.success) return zodError(parsed.error);
     const invalid = validateRuleValues(parsed.data.filters);
@@ -132,6 +136,7 @@ export async function deleteSegment(segmentId: string) {
 export async function previewSegmentCount(filters: SegmentInput["filters"]) {
   return safeAction(async () => {
     const { supabase, organization } = await getOrgContext();
+    if (!(await getPlanLimits(organization.id)).advanced_segmentation) return fail(SEGMENTATION_LOCKED);
     const parsed = segmentSchema.shape.filters.safeParse(filters);
     if (!parsed.success) return zodError(parsed.error);
     if (validateRuleValues(parsed.data)) return ok({ count: 0 });

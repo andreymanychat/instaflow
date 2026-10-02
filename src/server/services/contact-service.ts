@@ -2,6 +2,7 @@ import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 import * as ig from "@/server/integrations/instagram/client";
 import { getAccessToken, type InstagramAccount } from "@/server/services/instagram-account-service";
+import { checkLimit } from "@/server/services/plan-service";
 import type { Tables } from "@/types/database";
 
 export type Contact = Tables<"contacts">;
@@ -35,6 +36,12 @@ export async function upsertContact(
 
     const { data } = await admin.from("contacts").update(patch).eq("id", existing.id).select("*").single();
     return data ?? existing;
+  }
+
+  // Contato novo: respeita o limite de contatos do plano
+  const quota = await checkLimit(account.organization_id, "contacts");
+  if (!quota.allowed) {
+    throw new Error(`Limite de ${quota.limit.toLocaleString("pt-BR")} contatos do plano atingido: novo contato ignorado. Faça upgrade em Assinatura.`);
   }
 
   const profilePatch = await fetchProfilePatch(account, igsid);

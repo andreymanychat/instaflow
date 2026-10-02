@@ -3,6 +3,8 @@ import { getOrgContext } from "@/server/auth/session";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
+const PLAN_NAMES: Record<string, string> = { free: "Free", pro: "Pro", business: "Business" };
+
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const ctx = await getOrgContext();
   const { data: profile } = await ctx.supabase.from("profiles").select("full_name, avatar_url").eq("id", ctx.user.id).single();
@@ -18,7 +20,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return (
     <SidebarProvider defaultOpen={defaultOpen}>
       <AppSidebar
-        organization={{ id: ctx.organization.id, name: ctx.organization.name, planId: ctx.organization.plan_id }}
+        organization={{ id: ctx.organization.id, name: ctx.organization.name, planName: PLAN_NAMES[ctx.organization.plan_id] ?? ctx.organization.plan_id }}
         organizations={ctx.memberships.map((m) => ({ id: m.organization.id, name: m.organization.name }))}
         user={{ email: ctx.user.email ?? "", name: profile?.full_name ?? "", avatarUrl: profile?.avatar_url ?? null }}
         unreadConversations={unread ?? 0}

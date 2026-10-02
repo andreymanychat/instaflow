@@ -29,8 +29,11 @@ const serverSchema = z.object({
   OPENAI_API_KEY: z.string().optional(),
   OPENAI_DEFAULT_MODEL: z.string().default("gpt-5-mini"),
 
-  STRIPE_SECRET_KEY: z.string().optional(),
-  STRIPE_WEBHOOK_SECRET: z.string().optional(),
+  // Cobrança (Asaas). Sem a chave, o checkout fica desativado e o app segue no plano Free.
+  ASAAS_API_KEY: z.string().optional(),
+  ASAAS_ENVIRONMENT: z.enum(["sandbox", "production"]).default("sandbox"),
+  /** Token que o Asaas envia no header asaas-access-token de cada webhook. */
+  ASAAS_WEBHOOK_TOKEN: z.string().optional(),
 });
 
 export type ServerEnv = z.infer<typeof serverSchema>;
@@ -57,4 +60,4 @@ export function instagramCredentials() {
 }
 
 export const isOpenAIConfigured = () => Boolean(process.env.OPENAI_API_KEY);
-export const isStripeConfigured = () => Boolean(process.env.STRIPE_SECRET_KEY);
+export const isBillingConfigured = () => Boolean(process.env.ASAAS_API_KEY);

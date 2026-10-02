@@ -3,8 +3,8 @@
 ## Testes automatizados
 
 ```bash
-npm test          # matcher de palavras-chave, variáveis, parser de IDs grandes
-npm run test:db   # migração + RLS multi-tenant num Postgres embutido (26 verificações)
+npm test          # palavras-chave, variáveis, IDs grandes, CPF/CNPJ, carteira e períodos de cobrança
+npm run test:db   # migração + RLS multi-tenant num Postgres embutido (planos, carteira, cartões, privacidade do perfil)
 npm run typecheck
 npm run lint
 npm run build
@@ -59,8 +59,18 @@ Use **outra** conta do Instagram (não a conectada) para comentar e mandar DMs.
 | 21 | Resposta padrão | Modelo "Resposta padrão com IA" com IA automática desligada | Dispara 1x a cada 24h por contato |
 | 22 | Story | Modelo "Resposta a Stories" → responda um story | DM de agradecimento |
 | 23 | Logs | `/logs` → Eventos / Execuções / Webhooks brutos | Filtros por nível e origem |
-| 24 | Limites do plano | Ative mais de 3 automações no plano Free | Erro "Seu plano permite 3 automações ativas" |
-| 25 | Assinatura | `/billing` | Uso vs. limites e planos ("Em breve" até ativar Stripe) |
+| 24 | Limites do plano | Ative 2 automações no plano Free | Erro "Seu plano permite 1 automação(ões) ativa(s)" |
+| 25 | Assinatura | `/billing` | Uso vs. limites e os planos Free/Pro/Business ("Em breve" sem `ASAAS_API_KEY`) |
+| 25a | Tema | Menu do usuário → Tema → Escuro/Claro/Sistema | Interface troca na hora e lembra a escolha |
+| 25b | Perfil | Minha conta → CPF inválido; CEP 01310-100 | CPF recusado; endereço preenchido pelo CEP |
+| 25c | Foto | Minha conta → Enviar foto (PNG até 2 MB) | Foto aparece no menu lateral |
+| 25d | Checkout cartão | `/billing` → Assinar Pro → cartão de teste do sandbox | Plano Pro ativo, renovação em 1 mês, cartão salvo |
+| 25e | Checkout Pix | Assinar Business → Pix → confirmar no painel do Asaas | Tela confirma sozinha em até 5s |
+| 25f | Carteira | Carteira → Adicionar saldo R$ 20 via Pix → pagar | Saldo R$ 20 e extrato; usado na próxima assinatura |
+| 25g | Indique e ganhe | Assinante gera link → abrir em aba anônima → cadastrar → assinar | Quem indicou recebe R$ 10 na carteira |
+| 25h | Renovação | Ajuste `current_period_end` para daqui a 2 dias e chame `/api/cron/billing` | Pix de renovação gerado (sem cartão) |
+| 25i | Inadimplência | Ajuste `current_period_end` para o passado e chame o cron | Organização volta ao Free e automações excedentes pausadas |
+| 25j | Excluir conta | Minha conta → Excluir conta → digitar o email | Login, organizações (só dono) e dados apagados |
 | 26 | Renovação de token | `curl -X POST -H "Authorization: Bearer $CRON_SECRET" https://seuprojeto.vercel.app/api/cron/refresh-tokens` | `{"ok":true,"checked":N,"refreshed":M}` |
 | 27 | Desautorização | Instagram → Apps e sites → remover o app | Conta fica "Acesso removido — reconecte" |
 | 28 | Exclusão de dados | Remover o app marcando exclusão | Conta e dados apagados; `/exclusao-de-dados?codigo=...` mostra o status |

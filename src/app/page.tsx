@@ -1,8 +1,11 @@
 import Link from "next/link";
-import { Bot, GitBranch, Inbox, MessageSquareReply, ShieldCheck, Tags } from "lucide-react";
+import { Bot, Check, GitBranch, Inbox, MessageSquareReply, ShieldCheck, Tags } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/brand/logo";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
+import { createClient } from "@/lib/supabase/server";
 import { getUser } from "@/server/auth/session";
+import { cn, formatCurrency } from "@/lib/utils";
 
 const FEATURES = [
   { icon: MessageSquareReply, title: "Comentário → Direct", text: "Responda comentários publicamente e envie o link no Direct na hora." },
@@ -13,14 +16,21 @@ const FEATURES = [
   { icon: ShieldCheck, title: "API oficial da Meta", text: "Sem senha, sem risco de bloqueio: login oficial do Instagram e webhooks assinados." },
 ];
 
-export default async function LandingPage() {
+export default async function LandingPage({ searchParams }: PageProps<"/">) {
+  const { conta } = await searchParams;
   const user = await getUser();
+  const supabase = await createClient();
+  const { data: plans } = await supabase.from("plans").select("*").eq("is_active", true).order("sort_order");
 
   return (
     <div className="min-h-svh bg-background">
       <header className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 md:px-6">
         <Logo />
         <nav className="flex items-center gap-2">
+          <ThemeToggle />
+          <Button asChild variant="ghost" className="hidden sm:inline-flex">
+            <Link href="#precos">Preços</Link>
+          </Button>
           {user ? (
             <Button asChild>
               <Link href="/dashboard">Abrir painel</Link>
@@ -39,6 +49,11 @@ export default async function LandingPage() {
       </header>
 
       <main>
+        {conta === "excluida" && (
+          <p className="mx-auto mt-4 max-w-xl rounded-lg border px-4 py-3 text-center text-sm text-muted-foreground">
+            Sua conta e todos os dados criados por ela foram excluídos.
+          </p>
+        )}
         <section className="mx-auto max-w-4xl px-4 py-20 text-center md:py-28">
           <span className="rounded-full border px-3 py-1 text-xs text-muted-foreground">Automação oficial para Instagram</span>
           <h1 className="mt-6 text-4xl font-semibold tracking-tight md:text-6xl">
@@ -66,6 +81,33 @@ export default async function LandingPage() {
               <p className="mt-1 text-sm text-muted-foreground">{feature.text}</p>
             </div>
           ))}
+        </section>
+
+        <section id="precos" className="mx-auto max-w-6xl px-4 pb-24 md:px-6">
+          <h2 className="text-center text-3xl font-semibold tracking-tight">Planos simples, sem fidelidade</h2>
+          <p className="mt-2 text-center text-muted-foreground">Comece grátis. Pague com cartão de crédito ou Pix quando precisar de mais.</p>
+          <div className="mt-10 grid gap-4 md:grid-cols-3">
+            {plans?.map((plan) => (
+              <div key={plan.id} className={cn("flex flex-col rounded-xl border p-6", plan.id === "pro" && "border-primary ring-1 ring-primary")}>
+                <h3 className="font-semibold">{plan.name}</h3>
+                <p className="text-sm text-muted-foreground">{plan.description}</p>
+                <p className="mt-4 text-3xl font-semibold">
+                  {plan.price_cents === 0 ? "Grátis" : formatCurrency(plan.price_cents, plan.currency)}
+                  {plan.price_cents > 0 && <span className="text-sm font-normal text-muted-foreground">/mês</span>}
+                </p>
+                <ul className="mt-6 flex-1 space-y-2 text-sm">
+                  {plan.features.map((feature) => (
+                    <li key={feature} className="flex items-start gap-2">
+                      <Check className="mt-0.5 size-4 shrink-0 text-primary" /> {feature}
+                    </li>
+                  ))}
+                </ul>
+                <Button asChild className="mt-6" variant={plan.id === "pro" ? "default" : "outline"}>
+                  <Link href={user ? "/billing" : "/signup"}>{plan.price_cents === 0 ? "Começar grátis" : `Assinar o ${plan.name}`}</Link>
+                </Button>
+              </div>
+            ))}
+          </div>
         </section>
       </main>
 

@@ -17,6 +17,12 @@ type RunStatus = "running" | "waiting_delay" | "waiting_input" | "completed" | "
 type JobStatus = "pending" | "processing" | "done" | "failed";
 type LogLevel = "debug" | "info" | "warn" | "error";
 type SubscriptionStatus = "trialing" | "active" | "past_due" | "canceled" | "incomplete";
+type PersonType = "pf" | "pj";
+type WalletKind = "referral_bonus" | "pix_topup" | "subscription_debit" | "adjustment";
+type PaymentKind = "subscription" | "topup";
+type PaymentMethod = "pix" | "card" | "wallet";
+type PaymentStatus = "pending" | "paid" | "failed" | "refunded" | "canceled";
+type ReferralStatus = "pending" | "rewarded" | "ineligible";
 
 /** Monta Insert/Update a partir do Row: `Req` são as colunas obrigatórias no insert. */
 type Table<Row, Req extends keyof Row, Rel extends Relationship[] = []> = {
@@ -75,6 +81,9 @@ export type Database = {
           default_ai_prompt_id: string | null;
           human_takeover_minutes: number;
           created_by: string | null;
+          billing_owner_id: string | null;
+          cancel_at_period_end: boolean;
+          pending_plan_id: string | null;
           created_at: string;
           updated_at: string;
         },
@@ -110,6 +119,18 @@ export type Database = {
           full_name: string | null;
           avatar_url: string | null;
           email: string | null;
+          person_type: PersonType | null;
+          document: string | null;
+          company_name: string | null;
+          phone: string | null;
+          postal_code: string | null;
+          street: string | null;
+          address_number: string | null;
+          complement: string | null;
+          district: string | null;
+          city: string | null;
+          state: string | null;
+          asaas_customer_id: string | null;
           created_at: string;
           updated_at: string;
         },
@@ -346,6 +367,83 @@ export type Database = {
         { id: string; confirmation_code: string; ig_user_id: string; status: string; created_at: string },
         "ig_user_id"
       >;
+      user_wallets: Table<{ user_id: string; balance_cents: number; updated_at: string }, "user_id">;
+      wallet_transactions: Table<
+        {
+          id: string;
+          user_id: string;
+          amount_cents: number;
+          balance_after_cents: number;
+          kind: WalletKind;
+          description: string;
+          reference: string | null;
+          created_at: string;
+        },
+        "user_id" | "amount_cents" | "balance_after_cents" | "kind" | "description"
+      >;
+      payment_methods: Table<
+        {
+          id: string;
+          user_id: string;
+          provider: string;
+          token: string;
+          brand: string | null;
+          last4: string | null;
+          holder_name: string | null;
+          is_default: boolean;
+          created_at: string;
+        },
+        "user_id" | "token"
+      >;
+      payments: Table<
+        {
+          id: string;
+          user_id: string;
+          organization_id: string | null;
+          provider: string;
+          provider_payment_id: string | null;
+          kind: PaymentKind;
+          plan_id: string | null;
+          is_renewal: boolean;
+          amount_cents: number;
+          wallet_used_cents: number;
+          method: PaymentMethod;
+          status: PaymentStatus;
+          pix_payload: string | null;
+          pix_qr_image: string | null;
+          pix_expires_at: string | null;
+          invoice_url: string | null;
+          due_date: string | null;
+          paid_at: string | null;
+          failure_reason: string | null;
+          created_at: string;
+          updated_at: string;
+        },
+        "user_id" | "kind" | "amount_cents" | "method",
+        [
+          Fk<"payments_plan_id_fkey", "plan_id", "plans">,
+          Fk<"payments_organization_id_fkey", "organization_id", "organizations">,
+        ]
+      >;
+      billing_events: Table<
+        { id: string; event: string; payload: Json; processed_at: string | null; error: string | null; created_at: string },
+        "id" | "event" | "payload"
+      >;
+      referral_links: Table<{ id: string; user_id: string; code: string; expires_at: string; created_at: string }, "user_id">;
+      referrals: Table<
+        {
+          id: string;
+          referrer_id: string;
+          referred_id: string;
+          link_id: string | null;
+          status: ReferralStatus;
+          reward_cents: number;
+          rewarded_at: string | null;
+          created_at: string;
+        },
+        "referrer_id" | "referred_id",
+        [Fk<"referrals_referred_id_fkey", "referred_id", "profiles">]
+      >;
     };
     Views: {
       instagram_accounts_public: {
@@ -385,6 +483,10 @@ export type Database = {
         SetofOptions: { from: "*"; to: "contacts"; isOneToOne: false; isSetofReturn: true };
       };
       is_org_member: { Args: { org_id: string }; Returns: boolean };
+      wallet_apply: {
+        Args: { p_user: string; p_amount: number; p_kind: string; p_description: string; p_reference: string | null };
+        Returns: number;
+      };
     };
     Enums: {
       member_role: MemberRole;

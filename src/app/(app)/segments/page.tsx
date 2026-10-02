@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Filter } from "lucide-react";
+import { Filter, Lock } from "lucide-react";
 import { getOrgContext } from "@/server/auth/session";
+import { getPlanLimits } from "@/server/services/plan-service";
 import { PageBody, PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,28 @@ export const metadata: Metadata = { title: "Segmentos" };
 
 export default async function SegmentsPage() {
   const { supabase, organization } = await getOrgContext();
+  const { advanced_segmentation: unlocked } = await getPlanLimits(organization.id);
+  if (!unlocked) {
+    return (
+      <>
+        <PageHeader title="Segmentos" description="Grupos dinâmicos de contatos baseados em tags e comportamento" />
+        <PageBody>
+          <div className="mx-auto flex max-w-lg flex-col items-center gap-3 rounded-xl border border-dashed py-16 text-center">
+            <Lock className="size-10 text-muted-foreground" />
+            <div>
+              <p className="font-medium">Segmentação avançada</p>
+              <p className="px-6 text-sm text-muted-foreground">
+                Crie públicos dinâmicos (ex.: tem a tag “interessado” E interagiu nos últimos 7 dias). Disponível nos planos Pro e Business.
+              </p>
+            </div>
+            <Button asChild>
+              <Link href="/billing">Ver planos</Link>
+            </Button>
+          </div>
+        </PageBody>
+      </>
+    );
+  }
   const [{ data: segments }, { data: tags }, { data: accounts }] = await Promise.all([
     supabase.from("segments").select("*").eq("organization_id", organization.id).order("created_at"),
     supabase.from("tags").select("id, name, color").eq("organization_id", organization.id).order("name"),

@@ -11,6 +11,7 @@ const PUBLIC_PREFIXES = [
   "/exclusao-de-dados",
   "/remover-dados",
   "/invite",
+  "/r",
 ];
 
 export async function proxy(request: NextRequest) {

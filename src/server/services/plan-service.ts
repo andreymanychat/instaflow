@@ -7,16 +7,19 @@ export type PlanLimits = {
   active_automations: number;
   ai_replies_per_month: number;
   members: number;
+  advanced_segmentation: boolean;
 };
 
-export type LimitKey = keyof PlanLimits;
+export type LimitKey = Exclude<keyof PlanLimits, "advanced_segmentation">;
 
+/** Limites do Free: usados se o plano não puder ser lido. */
 const FALLBACK_LIMITS: PlanLimits = {
   instagram_accounts: 1,
-  contacts: 1000,
-  active_automations: 3,
-  ai_replies_per_month: 100,
-  members: 2,
+  contacts: 500,
+  active_automations: 1,
+  ai_replies_per_month: 20,
+  members: 1,
+  advanced_segmentation: false,
 };
 
 export async function getPlanLimits(organizationId: string): Promise<PlanLimits> {

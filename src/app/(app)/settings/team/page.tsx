@@ -57,7 +57,7 @@ export default async function TeamPage() {
         <Card>
           <CardHeader>
             <CardTitle>Convidar pessoas</CardTitle>
-            <CardDescription>Gere um link de convite e envie para a pessoa. Ele expira em 7 dias.</CardDescription>
+            <CardDescription>Gere um link de convite e envie para a pessoa. Ele expira em 3 dias.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <InviteMemberForm />

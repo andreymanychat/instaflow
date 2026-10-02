@@ -25,7 +25,9 @@ Multi-tenant, multiusuário, com construtor visual de fluxos, caixa de entrada e
 - **Contatos, tags e segmentos dinâmicos** (avaliados no Postgres)
 - **IA**: prompts configuráveis, prompt padrão, resposta automática, playground de testes, cota por plano
 - **Logs**: eventos, execuções de automações e webhooks brutos
-- **Assinatura**: planos e limites aplicados no backend; estrutura pronta para Stripe
+- **Assinatura com Asaas**: Free / Pro (R$ 57) / Business (R$ 97), cartão de crédito e Pix, renovação automática, carteira de créditos (recarga via Pix) e "Indique e ganhe" (R$ 10 por indicação) — veja [docs/PAGAMENTOS.md](docs/PAGAMENTOS.md)
+- **Minha conta**: perfil PF/PJ com CPF/CNPJ validado, endereço com busca por CEP, foto, e exclusão completa da conta
+- **Tema claro/escuro** (ou seguir o sistema)
 
 ## Início rápido (local)
 
@@ -76,7 +78,7 @@ instaflow/
     │   │   ├── oauth/               # connect, callback, deauthorize, data-deletion
     │   │   ├── cron/                # process-jobs, refresh-tokens
     │   │   ├── instagram/media/     # posts para o gatilho de comentário
-    │   │   ├── billing/webhook/     # reservado para Stripe
+    │   │   ├── billing/webhook/     # webhook do Asaas
     │   │   └── health/              # diagnóstico de configuração
     │   ├── auth/callback/           # confirmação de email / reset de senha
     │   ├── onboarding/ invite/ reset-password/
@@ -90,6 +92,6 @@ instaflow/
     │   ├── engine/                  # motor de fluxos: grafo, executores, gatilhos
     │   ├── integrations/            # clientes Instagram Graph API e OpenAI
     │   ├── services/                # webhook, mensagens, contatos, IA, fila, planos, logs
-    │   └── billing/                 # abstração de cobrança (Stripe-ready)
+    │   └── billing/                 # cobrança Asaas, carteira, renovação e indicações
     └── types/                       # tipos do banco e do modelo de fluxo
 ```

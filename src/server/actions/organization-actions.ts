@@ -62,7 +62,7 @@ export async function inviteMember(input: { email: string; role: "admin" | "memb
     if (!parsed.success) return zodError(parsed.error);
 
     const quota = await checkLimit(organization.id, "members");
-    if (!quota.allowed) return fail(`Seu plano permite ${quota.limit} membros.`);
+    if (!quota.allowed) return fail(`Seu plano permite até ${quota.limit} membro(s) na equipe. Faça upgrade em Assinatura.`);
 
     const { data, error } = await supabase
       .from("organization_invitations")

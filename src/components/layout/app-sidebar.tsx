@@ -17,6 +17,9 @@ import {
   Users,
   Workflow,
   Check,
+  Gift,
+  UserRound,
+  Wallet,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -42,6 +45,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LogoMark } from "@/components/brand/logo";
+import { ThemeSubMenu } from "@/components/theme/theme-toggle";
 import { switchOrganization } from "@/server/actions/organization-actions";
 import { signOut } from "@/server/actions/auth-actions";
 import { initials } from "@/lib/utils";
@@ -74,7 +78,7 @@ const NAV = [
 ];
 
 type Props = {
-  organization: { id: string; name: string; planId: string };
+  organization: { id: string; name: string; planName: string };
   organizations: { id: string; name: string }[];
   user: { email: string; name: string; avatarUrl: string | null };
   unreadConversations: number;
@@ -103,7 +107,7 @@ export function AppSidebar({ organization, organizations, user, unreadConversati
                   <LogoMark />
                   <div className="grid flex-1 text-left text-sm leading-tight">
                     <span className="truncate font-semibold">{organization.name}</span>
-                    <span className="truncate text-xs capitalize text-muted-foreground">Plano {organization.planId}</span>
+                    <span className="truncate text-xs text-muted-foreground">Plano {organization.planName}</span>
                   </div>
                   <ChevronsUpDown className="ml-auto size-4" />
                 </SidebarMenuButton>
@@ -173,10 +177,21 @@ export function AppSidebar({ organization, organizations, user, unreadConversati
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-56" side="top" align="start">
                 <DropdownMenuItem asChild>
-                  <Link href="/settings">
-                    <Settings className="size-4" /> Configurações
+                  <Link href="/account">
+                    <UserRound className="size-4" /> Minha conta
                   </Link>
                 </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/account/wallet">
+                    <Wallet className="size-4" /> Carteira e cartões
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/account/referrals">
+                    <Gift className="size-4" /> Indique e ganhe
+                  </Link>
+                </DropdownMenuItem>
+                <ThemeSubMenu />
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => startTransition(() => signOut())}>
                   <LogOut className="size-4" /> Sair

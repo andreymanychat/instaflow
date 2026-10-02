@@ -20,6 +20,11 @@ await db.exec(`
     select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
   grant usage on schema auth to anon, authenticated, service_role;
   create publication supabase_realtime;
+  create schema storage;
+  create table storage.buckets (id text primary key, name text, public boolean, file_size_limit bigint, allowed_mime_types text[]);
+  create table storage.objects (id uuid primary key default gen_random_uuid(), bucket_id text, name text);
+  alter table storage.objects enable row level security;
+  create function storage.foldername(name text) returns text[] language sql immutable as $$ select string_to_array(name, '/') $$;
 `);
 
 for (const sql of migrations) await db.exec(sql);
@@ -149,6 +154,52 @@ check("job já reservado não é pego de novo", again.rows.length === 0);
 
 const code = (await db.query("insert into public.data_deletion_requests (ig_user_id) values ('123') returning confirmation_code")).rows[0].confirmation_code;
 check("código de exclusão com 16 hex", /^[0-9a-f]{16}$/.test(code));
+
+// ---- Planos, carteira, cartões e indicações ----------------------------------
+const planos = (await db.query("select id, price_cents, limits from public.plans order by sort_order")).rows;
+check("planos Free/Pro/Business com preços R$0/57/97", planos.map((p) => p.price_cents).join(",") === "0,5700,9700");
+check("Free: 500 contatos e 1 automação", planos[0].limits.contacts === 500 && planos[0].limits.active_automations === 1);
+
+const s1 = (await db.query(`select public.wallet_apply('${A}', 1000, 'referral_bonus', 'Indicação', 'ref-1') as s`)).rows[0].s;
+const s2 = (await db.query(`select public.wallet_apply('${A}', 1000, 'referral_bonus', 'Indicação', 'ref-1') as s`)).rows[0].s;
+check("carteira: crédito de R$10 aplicado uma única vez (idempotente)", s1 === 1000 && s2 === 1000);
+await expectError("carteira: não permite saldo negativo", () =>
+  db.query(`select public.wallet_apply('${A}', -5000, 'subscription_debit', 'Renovação', 'ren-1')`),
+);
+await expectError("usuário NÃO movimenta a própria carteira", () =>
+  as(A, () => db.query(`select public.wallet_apply('${A}', 99999, 'adjustment', 'hack', null)`)),
+);
+const saldoVisto = await as(A, () => db.query("select balance_cents from public.user_wallets"));
+check("usuário vê o próprio saldo", saldoVisto.rows[0]?.balance_cents === 1000);
+const saldoB = await as(B, () => db.query("select balance_cents from public.user_wallets"));
+check("usuário NÃO vê saldo alheio", saldoB.rows.length === 0);
+
+await db.exec(`insert into public.payment_methods (user_id, token, brand, last4) values ('${A}', 'tok_secreto', 'VISA', '4242')`);
+await expectError("usuário NÃO lê o token do cartão", () => as(A, () => db.query("select token from public.payment_methods")));
+check("usuário vê bandeira e final do cartão", (await as(A, () => db.query("select last4 from public.payment_methods"))).rows[0]?.last4 === "4242");
+
+await expectError("usuário NÃO altera o vínculo com o Asaas", () =>
+  as(A, () => db.query(`update public.profiles set asaas_customer_id = 'cus_x' where id = '${A}'`)),
+);
+await as(A, () => db.query(`update public.profiles set person_type = 'pf', document = '52998224725', phone = '11999998888' where id = '${A}'`));
+check("usuário edita os próprios dados cadastrais", (await db.query(`select document from public.profiles where id='${A}'`)).rows[0].document === "52998224725");
+await expectError("documento inválido (formato) é recusado", () =>
+  as(A, () => db.query(`update public.profiles set document = '123' where id = '${A}'`)),
+);
+
+// Bruno é colega da Ana (convite aceito acima): vê o nome, mas não os dados cadastrais
+const colega = await as(B, () => db.query(`select full_name from public.profiles where id = '${A}'`));
+check("colega vê o nome do outro membro", colega.rows[0]?.full_name === "Ana");
+await expectError("colega NÃO vê CPF/telefone de outro membro", () =>
+  as(B, () => db.query(`select document, phone from public.profiles where id = '${A}'`)),
+);
+
+await db.exec(`insert into public.payments (user_id, organization_id, kind, amount_cents, method, is_renewal, due_date)
+  values ('${A}', '${orgA.id}', 'subscription', 5700, 'pix', true, '2026-11-01')`);
+await expectError("não cria duas cobranças de renovação para o mesmo período", () =>
+  db.query(`insert into public.payments (user_id, organization_id, kind, amount_cents, method, is_renewal, due_date)
+    values ('${A}', '${orgA.id}', 'subscription', 5700, 'card', true, '2026-11-01')`),
+);
 
 console.log(failures === 0 ? "\nTODOS OS TESTES DE BANCO PASSARAM" : `\n${failures} FALHA(S)`);
 process.exit(failures ? 1 : 0);
