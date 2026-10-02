@@ -416,6 +416,9 @@ export type Database = {
           due_date: string | null;
           paid_at: string | null;
           failure_reason: string | null;
+          invoice_id: string | null;
+          invoice_status: "scheduling" | "scheduled" | "authorized" | "error" | "canceled" | null;
+          invoice_error: string | null;
           created_at: string;
           updated_at: string;
         },

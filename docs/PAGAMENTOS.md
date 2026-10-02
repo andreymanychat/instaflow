@@ -71,7 +71,24 @@ recebe **R$ 10,00** na carteira (uma vez por indicado, idempotente).
 7. Produção: crie a conta em <https://www.asaas.com>, troque a chave e `ASAAS_ENVIRONMENT=production`, refaça o webhook.
    A tokenização de cartão em produção precisa ser habilitada pelo Asaas (solicite ao gerente da conta).
 
-Referências: [cobranças](https://docs.asaas.com/reference/criar-nova-cobranca),
+## Nota fiscal automática (NFS-e)
+
+Cada cobrança paga no Asaas (Pix ou cartão) gera uma NFS-e agendada pela API (`POST /v3/invoices`), vinculada à cobrança.
+A parte paga com saldo da carteira não gera nova nota (recargas já têm nota própria; crédito de indicação é desconto).
+Ative preenchendo `ASAAS_INVOICE_CONFIG` com os dados do contador (código/nome do serviço municipal e alíquotas) e
+configurando as informações fiscais na conta do Asaas (Notas fiscais → Configurações). O status aparece em
+`payments.invoice_status` e erros da prefeitura vão para Logs. Inclua os eventos `INVOICE_*` no webhook.
+
+## Virada para produção (checklist)
+
+1. Conta de produção aprovada no Asaas (PJ), conta bancária PJ para saques, tokenização de cartão liberada pelo gerente.
+2. Informações fiscais configuradas no Asaas e `ASAAS_INVOICE_CONFIG` definida.
+3. Rodar `supabase/go-live-asaas.sql` (apaga só dados de cobrança do sandbox: clientes, cartões, pagamentos, saldos de teste).
+4. Na Vercel: `ASAAS_API_KEY` = chave de produção, `ASAAS_ENVIRONMENT=production` → redeploy.
+5. Criar a chave Pix e o webhook (com eventos `PAYMENT_*` e `INVOICE_*`) na conta de produção.
+6. Fazer uma assinatura real de R$ 57 com seu cartão, conferir a nota e estornar pelo painel do Asaas se quiser.
+
+Referências: [notas fiscais](https://docs.asaas.com/docs/emitindo-notas-fiscais-de-servico), [cobranças](https://docs.asaas.com/reference/criar-nova-cobranca),
 [tokenização](https://docs.asaas.com/docs/tokenizacao-de-cartao-de-credito),
 [QR Code Pix](https://docs.asaas.com/reference/obter-qr-code-para-pagamentos-via-pix),
 [webhooks](https://docs.asaas.com/docs/sobre-os-webhooks).

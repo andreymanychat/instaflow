@@ -4,6 +4,7 @@ import { formatCurrency } from "@/lib/utils";
 import { missingProfileFields } from "@/lib/profile";
 import * as asaas from "@/server/integrations/asaas/client";
 import { errorMessage, log } from "@/server/services/logger";
+import { handleInvoiceEvent, scheduleInvoiceForPayment } from "@/server/billing/invoice-service";
 import {
   REFERRAL_REWARD_CENTS,
   RENEWAL_PIX_DAYS_BEFORE,
@@ -367,10 +368,12 @@ export async function confirmPayment(paymentId: string, via: string) {
       p_reference: `payment:${payment.id}`,
     });
     await log({ level: "info", source: "billing", event: "topup_paid", message: `Recarga de ${formatCurrency(payment.amount_cents)} creditada.` });
+    await scheduleInvoiceForPayment(payment.id);
     return;
   }
 
   if (payment.wallet_used_cents > 0) await debitWallet(payment);
+  await scheduleInvoiceForPayment(payment.id);
   if (!payment.organization_id || !payment.plan_id) return;
 
   const { data: org } = await db.from("organizations").select("*").eq("id", payment.organization_id).maybeSingle();
@@ -663,7 +666,12 @@ async function renewOrganization(org: Organization, now: Date): Promise<"renewed
 
 // ---- Webhook ---------------------------------------------------------------------------
 
-type AsaasEvent = { id: string; event: string; payment?: { id: string; externalReference?: string | null; status?: string } };
+type AsaasEvent = {
+  id: string;
+  event: string;
+  payment?: { id: string; externalReference?: string | null; status?: string };
+  invoice?: { id: string; externalReference?: string | null; statusDescription?: string | null };
+};
 
 export async function processBillingEvent(eventId: string) {
   const db = admin();
@@ -672,6 +680,7 @@ export async function processBillingEvent(eventId: string) {
 
   try {
     const event = row.payload as unknown as AsaasEvent;
+    if (event.invoice && event.event.startsWith("INVOICE_")) await handleInvoiceEvent(event.event, event.invoice);
     const payment = event.payment ? await findPayment(event.payment.id, event.payment.externalReference) : null;
     if (payment) {
       switch (event.event) {

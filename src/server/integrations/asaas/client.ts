@@ -138,6 +138,22 @@ export const getPayment = (id: string) => request<AsaasPayment>("GET", `/payment
 
 export const deletePayment = (id: string) => request<{ deleted: boolean }>("DELETE", `/payments/${encodeURIComponent(id)}`);
 
+// ---- Notas fiscais (NFS-e) --------------------------------------------------------
+
+export const scheduleInvoice = (input: {
+  payment: string;
+  serviceDescription: string;
+  observations: string;
+  externalReference: string;
+  value: number;
+  deductions: number;
+  effectiveDate: string;
+  municipalServiceId?: string;
+  municipalServiceCode?: string;
+  municipalServiceName: string;
+  taxes: { retainIss: boolean; iss: number; pis: number; cofins: number; csll: number; inss: number; ir: number };
+}) => request<{ id: string; status: string }>("POST", "/invoices", input);
+
 export const getPixQrCode = (id: string) =>
   request<{ encodedImage: string; payload: string; expirationDate: string }>(
     "GET",

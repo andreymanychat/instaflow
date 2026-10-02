@@ -34,6 +34,13 @@ const serverSchema = z.object({
   ASAAS_ENVIRONMENT: z.enum(["sandbox", "production"]).default("sandbox"),
   /** Token que o Asaas envia no header asaas-access-token de cada webhook. */
   ASAAS_WEBHOOK_TOKEN: z.string().optional(),
+  /**
+   * Nota fiscal automática (NFS-e). JSON com os dados passados pelo contador, ex.:
+   * {"municipalServiceCode":"1.05","municipalServiceName":"Licenciamento de programas de computador",
+   *  "taxes":{"iss":2,"retainIss":false}}
+   * Ausente = não emite notas.
+   */
+  ASAAS_INVOICE_CONFIG: z.string().optional(),
 });
 
 export type ServerEnv = z.infer<typeof serverSchema>;
