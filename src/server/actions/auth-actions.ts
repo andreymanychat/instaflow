@@ -49,7 +49,7 @@ export async function signUp(
       emailRedirectTo: `${appUrl()}/auth/callback?next=${encodeURIComponent(next)}`,
     },
   });
-  if (error) return fail(error.message);
+  if (error) return fail(signUpErrorMessage(error.message));
 
   // identities vazio = email já cadastrado (o Supabase devolve um usuário fictício para não revelar isso)
   if (data.user && data.user.identities?.length) await recordReferral(data.user.id);
@@ -57,6 +57,17 @@ export async function signUp(
   // Com confirmação de email desativada o Supabase já devolve a sessão.
   if (data.session) redirect(next);
   return ok({ needsConfirmation: true });
+}
+
+/** Mensagens do Supabase Auth em português (o padrão vem em inglês). */
+function signUpErrorMessage(message: string) {
+  const m = message.toLowerCase();
+  if (m.includes("is invalid")) return "Este email não é aceito. Use um email válido que você acessa.";
+  if (m.includes("already registered") || m.includes("already been registered")) return "Este email já tem conta. Faça login.";
+  if (m.includes("rate limit") || m.includes("too many")) return "Muitas tentativas. Aguarde alguns minutos e tente de novo.";
+  if (m.includes("password")) return "Senha fraca: use pelo menos 8 caracteres, misturando letras e números.";
+  if (m.includes("sending") && m.includes("email")) return "Não conseguimos enviar o email de confirmação agora. Tente novamente em instantes.";
+  return "Não foi possível criar a conta agora. Tente novamente.";
 }
 
 /** Vincula o novo usuário a quem o indicou (cookie do link /r/<código>, válido por 3 dias). */

@@ -68,6 +68,8 @@ export function CheckoutDialog({ plan, walletCents, chargeCents, cards, missingP
       const data = result.data;
       if (data.status === "failed") return void toast.error(data.error);
       if (data.status === "paid") {
+        // O toast é global: continua visível mesmo quando a página recarrega e este diálogo some
+        toast.success(`Pagamento confirmado! O plano ${plan.name} já está ativo.`);
         setStep({ kind: "done" });
         return;
       }
@@ -104,7 +106,10 @@ export function CheckoutDialog({ plan, walletCents, chargeCents, cards, missingP
             paymentId={step.paymentId}
             payload={step.payload}
             image={step.image}
-            onPaid={() => setStep({ kind: "done" })}
+            onPaid={() => {
+              toast.success(`Pagamento confirmado! O plano ${plan.name} já está ativo.`);
+              setStep({ kind: "done" });
+            }}
             onFailed={(reason) => {
               toast.error(reason);
               setStep({ kind: "form" });

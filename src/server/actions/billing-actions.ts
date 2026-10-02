@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { isBillingConfigured } from "@/lib/env";
+import { env, isBillingConfigured } from "@/lib/env";
 import { fail, ok, safeAction, zodError } from "@/lib/action-result";
 import { isValidCardNumber, onlyDigits } from "@/lib/br";
 import { createClient } from "@/lib/supabase/server";
@@ -23,7 +23,11 @@ import { errorMessage, log } from "@/server/services/logger";
 
 const cardSchema = z.object({
   holderName: z.string().trim().min(3, "Informe o nome impresso no cartão.").max(100),
-  number: z.string().transform(onlyDigits).refine(isValidCardNumber, "Número do cartão inválido."),
+  // Os cartões de teste do sandbox do Asaas (ex.: 4444 4444 4444 4444) não passam no Luhn
+  number: z
+    .string()
+    .transform(onlyDigits)
+    .refine((n) => (env().ASAAS_ENVIRONMENT === "sandbox" ? /^\d{13,19}$/.test(n) : isValidCardNumber(n)), "Número do cartão inválido."),
   expiry: z
     .string()
     .regex(/^(0[1-9]|1[0-2])\/\d{2}$/, "Validade no formato MM/AA.")

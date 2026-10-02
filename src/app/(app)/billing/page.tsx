@@ -68,10 +68,22 @@ export default async function BillingPage() {
             paymentId={pendingPix.id}
             payload={pendingPix.pix_payload!}
             image={pendingPix.pix_qr_image!}
-            title={pendingPix.is_renewal ? "Pix da renovação disponível" : "Pix aguardando pagamento"}
+            title={
+              pendingPix.is_renewal
+                ? paid
+                  ? "Pix da renovação disponível"
+                  : "Reative seu plano"
+                : "Pix aguardando pagamento"
+            }
             description={`${formatCurrency(pendingPix.amount_cents - pendingPix.wallet_used_cents)}${
-              pendingPix.due_date ? ` · vence em ${formatDate(pendingPix.due_date)}` : ""
-            }${pendingPix.is_renewal ? " · sem pagamento até o vencimento, a organização volta ao Free." : ""}`}
+              pendingPix.due_date && paid ? ` · vence em ${formatDate(pendingPix.due_date)}` : ""
+            }${
+              pendingPix.is_renewal
+                ? paid
+                  ? " · sem pagamento até o vencimento, a organização volta ao Free."
+                  : ` · pague este Pix para voltar ao plano ${plans?.find((p) => p.id === pendingPix.plan_id)?.name ?? ""} na hora.`
+                : ""
+            }`}
           />
         )}
 

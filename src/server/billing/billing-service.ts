@@ -262,6 +262,8 @@ async function createAndCharge(input: {
     return { status: "paid", paymentId: payment.id };
   }
 
+  // Cartão novo só fica salvo se a primeira cobrança passar (senão viraria o padrão das renovações)
+  let newCardId: string | null = null;
   try {
     const { customerId } = await ensureAsaasCustomer(input.userId);
 
@@ -296,6 +298,7 @@ async function createAndCharge(input: {
     let token: string;
     if (input.payWith.method === "new_card") {
       const saved = await saveCard(input.userId, input.payWith.card, input.remoteIp);
+      newCardId = saved.id;
       token = (await db.from("payment_methods").select("token").eq("id", saved.id).single()).data!.token;
     } else {
       const cardId = input.payWith.method === "card" ? input.payWith.cardId : null;
@@ -333,6 +336,7 @@ async function createAndCharge(input: {
   } catch (error) {
     const message = error instanceof asaas.AsaasError || error instanceof BillingError ? error.message : "Falha ao processar o pagamento.";
     await db.from("payments").update({ status: "failed", failure_reason: message }).eq("id", payment.id).eq("status", "pending");
+    if (newCardId) await discardCard(input.userId, newCardId);
     await log({
       organizationId: input.organizationId,
       level: "warn",
@@ -343,6 +347,20 @@ async function createAndCharge(input: {
     });
     return { status: "failed", paymentId: payment.id, error: message };
   }
+}
+
+/** Remove um cartão recusado e devolve o "padrão" ao cartão salvo mais recente. */
+async function discardCard(userId: string, cardId: string) {
+  const db = admin();
+  await db.from("payment_methods").delete().eq("id", cardId).eq("user_id", userId);
+  const { data: latest } = await db
+    .from("payment_methods")
+    .select("id")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (latest) await db.from("payment_methods").update({ is_default: true }).eq("id", latest.id);
 }
 
 // ---- Confirmação / falha (idempotentes) --------------------------------------------------
@@ -462,7 +480,7 @@ async function rewardReferrer(referredUserId: string, planId: string) {
     p_user: referral.referrer_id,
     p_amount: REFERRAL_REWARD_CENTS,
     p_kind: "referral_bonus",
-    p_description: `Indicação: ${firstName} assinou o plano ${planId}`,
+    p_description: `Indicação: ${firstName} assinou o plano ${(await getPlan(planId).catch(() => null))?.name ?? planId}`,
     p_reference: `referral:${referral.id}`,
   });
   if (error) {

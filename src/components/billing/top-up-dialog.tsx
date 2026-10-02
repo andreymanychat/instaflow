@@ -65,7 +65,10 @@ export function TopUpDialog({ suggested, disabled }: { suggested?: number; disab
             paymentId={step.paymentId}
             payload={step.payload}
             image={step.image}
-            onPaid={() => setStep({ kind: "done" })}
+            onPaid={() => {
+              toast.success("Saldo adicionado à sua carteira!");
+              setStep({ kind: "done" });
+            }}
             onFailed={(reason) => {
               toast.error(reason);
               setStep({ kind: "form" });

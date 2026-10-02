@@ -23,11 +23,14 @@ const FALLBACK_LIMITS: PlanLimits = {
 };
 
 export async function getPlanLimits(organizationId: string): Promise<PlanLimits> {
-  const { data } = await createAdminClient()
+  const { data, error } = await createAdminClient()
     .from("organizations")
-    .select("plan:plans(limits)")
+    // FK explícita: organizations tem duas ligações com plans (plan_id e pending_plan_id)
+    .select("plan:plans!organizations_plan_id_fkey(limits)")
     .eq("id", organizationId)
     .single();
+  // Falha aqui não pode passar em silêncio: cairia nos limites do Free para um cliente pagante
+  if (error) console.error("getPlanLimits falhou", organizationId, error.message);
   const limits = (data?.plan as { limits?: Partial<PlanLimits> } | null)?.limits;
   return { ...FALLBACK_LIMITS, ...(limits ?? {}) };
 }

@@ -15,8 +15,8 @@ Eu = faço no código/servidor; Juntos = eu preparo e abro as telas, você confi
 | 3 | Vercel Pro (uso comercial exige) | Você paga, eu confiro | 10 min | ⬜ | `fazer 3` |
 | 4 | Supabase Pro + proteção contra senhas vazadas | Você paga, eu configuro | 15 min | ⬜ | `fazer 4` |
 | 5 | Email próprio para cadastro/senha (Resend + SMTP no Supabase) | Juntos | 30 min (+ DNS) | ⬜ | `fazer 5` |
-| 6 | Asaas produção: conta PJ, chave de produção, liberar cartão, nota fiscal (NFS-e) automática | Juntos | 1–5 dias (análise do Asaas) | 🟡 código pronto (NFS-e + virada); aguardando conta PJ de produção | `fazer 6` |
-| 7 | Teste completo no sandbox: perfil → assinar Pro com Pix e cartão → webhook → recarga → indicação | Juntos | 30 min | ⬜ | `fazer 7` |
+| 6 | Asaas produção: conta PJ, chave de produção, liberar cartão, nota fiscal (NFS-e) automática | Juntos | 1–5 dias (análise do Asaas) | 🟡 conta PJ criada (A M R Ribeiro, andreymanychat) — documentos em análise (03/10). Serviço NFS-e: 01.05.01 (São Luís). Código pronto | `fazer 6` |
+| 7 | Teste completo no sandbox: perfil → assinar Pro com Pix e cartão → webhook → recarga → indicação | Juntos | 30 min | ✅ 02/10 — 9 testes ok; 5 bugs corrigidos | `fazer 7` |
 
 ## Fase 2 — Essencial antes do primeiro cliente pagante
 
