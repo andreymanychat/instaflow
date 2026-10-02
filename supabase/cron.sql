@@ -13,7 +13,7 @@
 -- =============================================================================
 
 create extension if not exists pg_cron;
-create extension if not exists pg_net;
+create extension if not exists pg_net with schema extensions; -- fora do schema public (recomendação dos Advisors)
 
 -- Guarda (ou atualiza) o segredo no Vault
 do $$
