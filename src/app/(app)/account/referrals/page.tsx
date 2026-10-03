@@ -32,7 +32,7 @@ export default async function ReferralsPage() {
       .select("id", { count: "exact", head: true })
       .eq("billing_owner_id", user.id)
       .neq("plan_id", "free")
-      .gt("current_period_end", now),
+      .or(`billing_exempt.eq.true,current_period_end.gt.${now}`),
     supabase.from("referral_links").select("*").gt("expires_at", now).order("created_at", { ascending: false }).limit(5),
     supabase.from("referrals").select("*").order("created_at", { ascending: false }).limit(50),
   ]);

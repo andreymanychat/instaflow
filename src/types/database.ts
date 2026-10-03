@@ -84,6 +84,7 @@ export type Database = {
           billing_owner_id: string | null;
           cancel_at_period_end: boolean;
           pending_plan_id: string | null;
+          billing_exempt: boolean;
           created_at: string;
           updated_at: string;
         },

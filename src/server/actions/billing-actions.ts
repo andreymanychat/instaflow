@@ -182,6 +182,7 @@ export async function setCancelAtPeriodEnd(cancel: boolean) {
   return safeAction(async () => {
     const { organization } = await requireAdmin();
     if (organization.plan_id === "free") return fail("Esta organização já está no plano Free.");
+    if (organization.billing_exempt) return fail("Esta organização tem plano cortesia permanente.");
     const db = createAdminClient();
     await db.from("organizations").update({ cancel_at_period_end: cancel }).eq("id", organization.id);
 

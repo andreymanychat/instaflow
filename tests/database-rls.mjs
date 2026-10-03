@@ -201,5 +201,9 @@ await expectError("não cria duas cobranças de renovação para o mesmo períod
     values ('${A}', '${orgA.id}', 'subscription', 5700, 'card', true, '2026-11-01')`),
 );
 
+await expectError("admin NÃO marca a própria organização como cortesia (billing_exempt)", () =>
+  as(A, () => db.query(`update public.organizations set billing_exempt = true where id = '${orgA.id}'`)),
+);
+
 console.log(failures === 0 ? "\nTODOS OS TESTES DE BANCO PASSARAM" : `\n${failures} FALHA(S)`);
 process.exit(failures ? 1 : 0);

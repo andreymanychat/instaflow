@@ -49,6 +49,7 @@ export default async function BillingPage() {
   const missing = missingProfileFields(profile);
   const currentPlan = plans?.find((p) => p.id === organization.plan_id);
   const paid = organization.plan_id !== "free";
+  const exempt = organization.billing_exempt;
   const periodEnd = organization.current_period_end ? formatDate(organization.current_period_end) : null;
   const pendingPix = payments?.find((p) => p.status === "pending" && p.method === "pix" && p.pix_payload && p.pix_qr_image);
 
@@ -91,6 +92,11 @@ export default async function BillingPage() {
           <CardHeader>
             <CardTitle className="flex flex-wrap items-center gap-2">
               Plano {currentPlan?.name ?? organization.plan_id}
+              {exempt && (
+                <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs font-normal text-emerald-700 dark:text-emerald-400">
+                  cortesia permanente
+                </span>
+              )}
               {organization.cancel_at_period_end && (
                 <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-xs font-normal text-amber-700 dark:text-amber-400">
                   cancelamento agendado
@@ -98,7 +104,9 @@ export default async function BillingPage() {
               )}
             </CardTitle>
             <CardDescription>
-              {paid && periodEnd
+              {exempt
+                ? "Plano do administrador do sistema: todos os recursos liberados, sem cobrança e sem data de renovação."
+                : paid && periodEnd
                 ? organization.cancel_at_period_end
                   ? `Ativo até ${periodEnd}. Depois volta ao Free.`
                   : `Renova em ${periodEnd} · ${formatCurrency(currentPlan?.price_cents ?? 0)}/mês (saldo da carteira primeiro, depois cartão ou Pix).`
@@ -127,7 +135,7 @@ export default async function BillingPage() {
             <Link href="/account/wallet" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
               <Wallet className="size-4" /> Saldo da carteira: <strong className="text-foreground">{formatCurrency(balance)}</strong>
             </Link>
-            {paid && isAdmin && <SubscriptionActions cancelScheduled={organization.cancel_at_period_end} periodEnd={periodEnd} />}
+            {paid && isAdmin && !exempt && <SubscriptionActions cancelScheduled={organization.cancel_at_period_end} periodEnd={periodEnd} />}
           </CardFooter>
         </Card>
 
@@ -162,6 +170,8 @@ export default async function BillingPage() {
                     <Button className="w-full" variant="outline" disabled>
                       Plano atual
                     </Button>
+                  ) : exempt ? (
+                    <p className="w-full text-center text-xs text-muted-foreground">Plano cortesia ativo nesta organização.</p>
                   ) : plan.price_cents === 0 ? (
                     <p className="w-full text-center text-xs text-muted-foreground">
                       {paid ? "Para voltar ao Free, cancele a assinatura acima." : ""}
@@ -192,7 +202,7 @@ export default async function BillingPage() {
         {!billingOn && (
           <p className="text-center text-sm text-muted-foreground">Pagamentos online ainda não estão ativos neste ambiente.</p>
         )}
-        {paid && billingOn && (
+        {paid && billingOn && !exempt && (
           <p className="text-center text-xs text-muted-foreground">
             Ao mudar de plano, o novo plano começa na hora com um novo período de 1 mês (sem cobrança proporcional).
           </p>

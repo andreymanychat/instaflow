@@ -13,7 +13,7 @@ begin;
 update public.organizations
 set plan_id = 'free', subscription_status = 'active', current_period_end = null,
     cancel_at_period_end = false, pending_plan_id = null, billing_owner_id = created_by
-where plan_id <> 'free';
+where plan_id <> 'free' and not billing_exempt;
 
 delete from public.payments;
 delete from public.payment_methods;

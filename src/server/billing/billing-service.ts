@@ -167,6 +167,7 @@ export async function startSubscriptionCheckout(params: {
   const plan = await getPlan(planId);
   if (plan.price_cents <= 0) throw new BillingError("O plano Free não precisa de pagamento.");
 
+  if (organization.billing_exempt) throw new BillingError("Esta organização tem plano cortesia permanente: não há o que pagar.");
   const active = organization.plan_id === planId && organization.current_period_end && new Date(organization.current_period_end) > new Date();
   if (active) throw new BillingError(`Esta organização já está no plano ${plan.name}.`);
 
@@ -467,7 +468,7 @@ async function rewardReferrer(referredUserId: string, planId: string) {
     .select("id", { count: "exact", head: true })
     .eq("billing_owner_id", referral.referrer_id)
     .neq("plan_id", "free")
-    .gt("current_period_end", new Date().toISOString());
+    .or(`billing_exempt.eq.true,current_period_end.gt.${new Date().toISOString()}`);
 
   if (!count) {
     await db.from("referrals").update({ status: "ineligible" }).eq("id", referral.id);
@@ -546,6 +547,8 @@ export async function refundPayment(paymentId: string) {
 /** Volta ao Free e pausa as automações que excedem o limite (mantém as editadas mais recentemente). */
 export async function downgradeToFree(organizationId: string, reason: string) {
   const db = admin();
+  const { data: current } = await db.from("organizations").select("billing_exempt").eq("id", organizationId).maybeSingle();
+  if (current?.billing_exempt) return; // plano cortesia permanente
   await db
     .from("organizations")
     .update({
@@ -592,6 +595,7 @@ export async function processRenewals(now = new Date()) {
     .from("organizations")
     .select("*")
     .neq("plan_id", "free")
+    .eq("billing_exempt", false)
     .not("current_period_end", "is", null)
     .lte("current_period_end", windowEnd.toISOString());
 

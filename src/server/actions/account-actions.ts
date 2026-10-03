@@ -115,7 +115,7 @@ export async function createReferralLink() {
       .select("id", { count: "exact", head: true })
       .eq("billing_owner_id", user.id)
       .neq("plan_id", "free")
-      .gt("current_period_end", new Date().toISOString());
+      .or(`billing_exempt.eq.true,current_period_end.gt.${new Date().toISOString()}`);
     if (!count) return fail("O Indique e ganhe é exclusivo para assinantes dos planos Pro e Business.");
 
     const expiresAt = new Date(Date.now() + REFERRAL_LINK_DAYS * 24 * 60 * 60 * 1000).toISOString();
